@@ -1,0 +1,14 @@
+{
+    "conservador": [
+        "segurança", "estabilidade", "reserva", "aposentadoria", "baixo risco", "proteção", "garantia",
+        "preservação", "capital", "renda fixa", "poupança", "tesouro direto", "cdb", "lci", "lca"
+    ],
+    "moderado": [
+        "equilíbrio", "diversificação", "médio prazo", "balanceado", "misto", "moderação",
+        "fundos multimercado", "imóveis", "debêntures", "câmbio", "inflação"
+    ],
+    "agressivo": [
+        "crescimento", "risco", "alta rentabilidade", "longo prazo", "ações", "lucro", "maximização",
+        "renda variável", "bolsa de valores", "startups", "criptomoedas", "futuros", "opções"
+    ]
+}

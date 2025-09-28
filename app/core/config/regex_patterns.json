@@ -1,0 +1,32 @@
+{
+    "investment_profiles": {
+        "conservador": [
+            "seguran[çc]a", "estabil(?:e|izado|idade)?", "reserva(s)?( financeira)?",
+            "aposentad(?:o|a|oria)", "baixo(?:s)? risco(?:s)?", "prote[cç][aã]o",
+            "garantia(s)?", "seguro(s)?", "poupan(?:ça|ca)", "renda fixa",
+            "tesouro direto", "cdb", "lci", "lca", "conservador(?:a|es)?",
+            "previsibilidade", "liquidez", "tranquilidade"
+        ],
+        "moderado": [
+            "equil[ií]br(?:io|ar|ado)?", "diversifica(?:r|[ãa]o|dor)?", 
+            "m[eé]dio(?:s)? prazo", "balancead(?:o|a|as)?", "misto", "modera(?:do|r)?",
+            "fundos multimercado", "im[óo]veis", "deb[eê]ntur(?:e|as)?", 
+            "c[aâ]mbio", "infla[çc][aã]o", "prudente", "cauteloso",
+            "aloca[çc][aã]o estrat[eé]gica", "rentabilidade moderada"
+        ],
+        "agressivo": [
+            "crescimento", "alto(?:s)? retorno(?:s)?", "alto(?:s)? risco(?:s)?",
+            "longo(?:s)? prazo(s)?", "a[çc][oõ]es?", "renda vari[aá]vel",
+            "lucro", "maximi[sz]ar", "multiplicar", "especula(?:r|ção|coes)?",
+            "alavancagem|alavancar", "day trade|swing trade|trading",
+            "criptomoedas?|crypto(s)?", "arrojad(?:o|a|os|as)?", "agressivo(s)?",
+            "bolsa de valores", "startups", "futuros", "op[çc][oõ]es",
+            "venture capital", "private equity"
+        ]
+    },
+    "financial_terms": {
+        "investment_amount": "r\\$(\\s)?\\d+(?:\\.\\d{3})*(?:,\\d{2})?|\\d+(?:\\.\\d{3})*(?:,\\d{2})?(\\s)?reais",
+        "time_period": "\\b(\\d+)\\s*(ano|meses?|mês|semana|dia)s?\\b",
+        "percentage": "\\b(\\d+(?:,\\d+)?)%\\b"
+    }
+}
