@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 import json
 import os
-os.environ["STREAMLIT_SECRETS_FILE"] = ".streamlit/secrets.toml"
+#os.environ["STREAMLIT_SECRETS_FILE"] = ".streamlit/secrets.toml"
 
 # Configuração da página
 st.set_page_config(
