@@ -1,8 +1,7 @@
 from typing import Dict, List, Tuple
 import unicodedata
 import re
-from pathlib import Path
-
+from collections import Counter
 
 def clean_text(text: str) -> str:
     """
@@ -24,8 +23,8 @@ def clean_text(text: str) -> str:
     text = re.sub(r"[^\w\s]", "", text)
 
     # Remove STOPWORDS mantendo palavras importantes
-    palavras = [palavra for palavra in text.split(
-    ) if palavra not in STOPWORDS and len(palavra) > 2]
+    palavras = [palavra for palavra in text.split()
+                if palavra not in STOPWORDS and len(palavra) > 2]
 
     return ' '.join(palavras)
 
@@ -33,10 +32,8 @@ def clean_text(text: str) -> str:
 class ProfileClassifier:
     def __init__(self):
         # APRENDIZADO CONTÍNUO: Armazena padrões de classificação
-        self.classification_history = {}
+        self.classification_history = {}  # Histórico local por usuário
         self.pattern_effectiveness = {}  # Aprende efetividade dos padrões regex
-
-        # PADRÕES REGEX AVANÇADOS - Substitui o arquivo JSON
         self.regex_patterns = self._initialize_regex_patterns()
 
     def _initialize_regex_patterns(self) -> Dict[str, List[str]]:
@@ -105,8 +102,7 @@ class ProfileClassifier:
         MELHORIA HÍBRIDA: Classifica perfil usando apenas regex patterns
         """
         cleaned_objective = clean_text(objective)
-        scores = {profile: 0.0 for profile in [
-            'conservador', 'moderado', 'agressivo']}
+        scores = {profile: 0.0 for profile in ['conservador', 'moderado', 'agressivo']}
 
         # Classificação com regex patterns + confiança
         regex_confidence = self._classify_with_regex(cleaned_objective, scores)
@@ -117,27 +113,28 @@ class ProfileClassifier:
 
             # Extrai perfis do histórico
             profiles_only = []
+            confidences = []
             for record in user_history:
                 if isinstance(record, dict):
                     profiles_only.append(record['profile'])
+                    confidences.append(record.get('confidence', 1.0))
                 else:
                     profiles_only.append(record)  # Registro legacy
+                    confidences.append(1.0)  # Confiança padrão
 
             # Se o usuário teve consistência em um perfil, dá peso extra
             if profiles_only:
-                most_common_profile = max(
-                    set(profiles_only), key=profiles_only.count)
+                most_common_profile = max(set(profiles_only), key=profiles_only.count)
                 if most_common_profile and most_common_profile in scores:
                     scores[most_common_profile] += 0.5  # Bônus de consistência
 
         total_score = sum(scores.values())
         if total_score == 0:
             # AUTONOMIA: Retorna classificação inteligente baseada em padrões globais
-            percentages = self._intelligent_default_classification(
-                cleaned_objective)
+            percentages = self._intelligent_default_classification(cleaned_objective)
             confidence = 0.3  # Baixa confiança para classificação por fallback
         else:
-            # Calcula a porcentagem de cada perfil - CORREÇÃO AQUI
+            # Calcula a porcentagem de cada perfil
             percentages = {
                 profile: (score / total_score) * 100
                 for profile, score in scores.items()
@@ -156,8 +153,7 @@ class ProfileClassifier:
         }
 
         # APRENDIZADO: Registra esta classificação para futuro aprendizado
-        self._learn_from_classification(
-            user_id, percentages, cleaned_objective, confidence)
+        self._learn_from_classification(user_id, percentages, cleaned_objective, confidence)
 
         return result
 
@@ -174,8 +170,7 @@ class ProfileClassifier:
                     matches = len(re.findall(pattern, cleaned_text, re.IGNORECASE))
                     if matches > 0:
                         # APRENDIZADO: Aplica efetividade aprendida para padrões regex
-                        effectiveness = self.pattern_effectiveness.get(
-                            pattern, 1.0)
+                        effectiveness = self.pattern_effectiveness.get(pattern, 1.0)
                         weighted_matches = matches * effectiveness
                         scores[profile] += weighted_matches
                         pattern_matches[profile] += matches
@@ -185,8 +180,7 @@ class ProfileClassifier:
                     continue
 
         # Calcula confiança baseada na quantidade e qualidade dos matches
-        confidence = min(total_matches / 3.0,
-                         1.0) if total_matches > 0 else 0.0
+        confidence = min(total_matches / 3.0, 1.0) if total_matches > 0 else 0.0
 
         # APRENDIZADO: Registra padrões utilizados para futura otimização
         self._learn_pattern_effectiveness(pattern_matches, cleaned_text)
@@ -222,11 +216,8 @@ class ProfileClassifier:
                 except re.error:
                     continue
 
-    # ==================== CARACTERÍSTICAS DE AGENTE DE IA ====================
-
     def _intelligent_default_classification(self, cleaned_objective: str) -> Dict[str, float]:
         """AUTONOMIA: Classificação inteligente quando não há padrões diretos."""
-
         # Análise semântica básica baseada em padrões aprendidos
         objective_length = len(cleaned_objective.split())
 
@@ -239,13 +230,10 @@ class ProfileClassifier:
 
         # Detecção de contexto por padrões linguísticos
         risk_indicators = ["rapido", "urgente", "muito", "maximo", "alto"]
-        safety_indicators = ["seguro", "tranquilo",
-                             "estavel", "sem", "proteger"]
+        safety_indicators = ["seguro", "tranquilo", "estavel", "sem", "proteger"]
 
-        risk_score = sum(
-            1 for indicator in risk_indicators if indicator in cleaned_objective)
-        safety_score = sum(
-            1 for indicator in safety_indicators if indicator in cleaned_objective)
+        risk_score = sum(1 for indicator in risk_indicators if indicator in cleaned_objective)
+        safety_score = sum(1 for indicator in safety_indicators if indicator in cleaned_objective)
 
         if safety_score > risk_score:
             return {"conservador": 60.0, "moderado": 30.0, "agressivo": 10.0}
@@ -254,19 +242,40 @@ class ProfileClassifier:
 
         return {"conservador": 33.3, "moderado": 33.3, "agressivo": 33.3}
 
-    def _learn_from_classification(self, user_id: str, percentages: Dict[str, float], objective: str, confidence: float = 1.0):
+    def _learn_from_classification(self, user_id: str, profile: Dict[str, float], objective: str, confidence: float):
         """
-        APRENDIZADO CONTÍNUO MELHORADO: Aprende com cada classificação incluindo confiança
+        APRENDIZADO CONTÍNUO: Aprende com cada classificação para melhorar futuras respostas
         """
         if not user_id:
             return
 
-        # Registra histórico de classificações do usuário
-        # CORREÇÃO: Encontrar o perfil dominante corretamente
-        dominant_profile = max(percentages.items(), key=lambda x: x[1])[0]
-        
         if user_id not in self.classification_history:
             self.classification_history[user_id] = []
+
+        # Identifica o perfil dominante
+        dominant_profile = max(profile, key=profile.get)
+
+        # Carrega perfil anterior do histórico local
+        previous_profile = None
+        if self.classification_history[user_id]:
+            last_record = self.classification_history[user_id][-1]
+            previous_profile = last_record['profile'] if isinstance(last_record, dict) else last_record
+
+        # Nova lógica de aprendizado
+        efficacy_adjustment = 0.05  # Recompensa padrão
+        if previous_profile and previous_profile != dominant_profile:
+            efficacy_adjustment = -0.1  # Penaliza se perfil mudou (indica erro)
+
+        matched_keywords = []
+        for pattern in self.regex_patterns[dominant_profile]:
+            if re.search(pattern, objective, re.IGNORECASE):
+                matched_keywords.append(pattern)
+
+        for keyword in matched_keywords:
+            # Atualiza eficácia no dicionário
+            self.pattern_effectiveness[keyword] = self.pattern_effectiveness.get(keyword, 1.0) + efficacy_adjustment
+            if self.pattern_effectiveness[keyword] < 0:  # Limite mínimo
+                self.pattern_effectiveness[keyword] = 0
 
         # Registra classificação com confiança
         classification_record = {
@@ -286,7 +295,7 @@ class ProfileClassifier:
         PERCEPÇÃO AMBIENTAL MELHORADA: Analisa evolução com dados de confiança
         """
         if user_id not in self.classification_history:
-            return {"evolution": "no_data", "consistency": 0, "trend": "unknown", "avg_confidence": 0.0}
+            return {"evolution": "no_data", "consistency": 0, "trend": "unknown", "avg_confidence": 0.0, "trend_score": 0.0, "history_length": 0, "recent_changes": 0, "data_quality": 0.0, "confidence_trend": "stable"}
 
         history = self.classification_history[user_id]
 
@@ -300,11 +309,9 @@ class ProfileClassifier:
                 confidences.append(record.get('confidence', 1.0))
             else:
                 profiles.append(record)  # Registro legacy
-                # Confiança padrão para registros antigos
-                confidences.append(1.0)
+                confidences.append(1.0)  # Confiança padrão para registros antigos
 
-        # Calcula consistência (quantas vezes o mesmo perfil aparece)
-        from collections import Counter
+        # Calcula consistência
         profile_counts = Counter(profiles)
         if profiles:
             most_common_profile = profile_counts.most_common(1)[0]
@@ -313,9 +320,8 @@ class ProfileClassifier:
             most_common_profile = ("no_data", 0)
             consistency = 0
 
-        # Calcula confiança média das classificações
-        avg_confidence = sum(confidences) / \
-            len(confidences) if confidences else 0.0
+        # Calcula confiança média
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
 
         # Detecta tendência de mudança
         recent_profiles = profiles[-5:] if len(profiles) >= 5 else profiles
@@ -332,16 +338,26 @@ class ProfileClassifier:
         else:
             trend = "insufficient_data"
 
+        # Cálculo de trend_score numérico
+        profile_map = {'conservador': 1, 'moderado': 2, 'agressivo': 3}
+        numeric_profiles = [profile_map.get(p, 0) for p in profiles]
+        if len(numeric_profiles) >= 2:
+            half = len(numeric_profiles) // 2
+            old_profiles = numeric_profiles[:half]
+            recent_profiles_num = numeric_profiles[half:]
+            trend_score = (sum(recent_profiles_num) / len(recent_profiles_num)) - (sum(old_profiles) / len(old_profiles)) if old_profiles else 0
+        else:
+            trend_score = 0
+
         # Análise de qualidade dos dados
-        high_confidence_classifications = sum(
-            1 for c in confidences if c >= 0.7)
-        data_quality = high_confidence_classifications / \
-            len(confidences) if confidences else 0.0
+        high_confidence_classifications = sum(1 for c in confidences if c >= 0.7)
+        data_quality = high_confidence_classifications / len(confidences) if confidences else 0.0
 
         return {
             "evolution": most_common_profile[0],
             "consistency": round(consistency, 2),
             "trend": trend,
+            "trend_score": round(trend_score, 2),
             "history_length": len(profiles),
             "recent_changes": len(set(recent_profiles)) if len(recent_profiles) > 1 else 0,
             "avg_confidence": round(avg_confidence, 2),
@@ -354,12 +370,10 @@ class ProfileClassifier:
         Estatísticas do sistema de aprendizado
         """
         total_users = len(self.classification_history)
-        total_classifications = sum(
-            len(history) for history in self.classification_history.values())
+        total_classifications = sum(len(history) for history in self.classification_history.values())
 
         # Estatísticas de efetividade dos padrões
-        avg_pattern_effectiveness = sum(self.pattern_effectiveness.values(
-        )) / len(self.pattern_effectiveness) if self.pattern_effectiveness else 1.0
+        avg_pattern_effectiveness = sum(self.pattern_effectiveness.values()) / len(self.pattern_effectiveness) if self.pattern_effectiveness else 1.0
 
         # Análise de qualidade dos dados
         all_confidences = []
@@ -370,8 +384,7 @@ class ProfileClassifier:
                 else:
                     all_confidences.append(1.0)
 
-        avg_system_confidence = sum(
-            all_confidences) / len(all_confidences) if all_confidences else 0.0
+        avg_system_confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
 
         return {
             "learning_status": {
@@ -394,4 +407,3 @@ class ProfileClassifier:
                 "adaptation": "active" if any(len(history) > 3 for history in self.classification_history.values()) else "inactive"
             }
         }
-    
